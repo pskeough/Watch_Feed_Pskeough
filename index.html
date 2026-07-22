@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Signal Watch</title>
+<meta name="theme-color" content="#262624">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#FAF9F5; --card:#FFFFFF; --ink:#3D3929; --sub:#87867F; --line:#E8E4D9;
+    --accent:#C15F3C; --accent-ink:#A9502F; --accent-soft:#F6EAE3;
+    --save:#966428; --save-soft:#F7EFDF; --chip:#F0EEE6; --seen:#B8B4A7;
+  }
+  @media (prefers-color-scheme: dark){:root{
+    --bg:#262624; --card:#30302E; --ink:#ECEAE4; --sub:#A6A39A; --line:#3E3D3A;
+    --accent:#D97757; --accent-ink:#E89478; --accent-soft:#453026;
+    --save:#E0A052; --save-soft:#3B321F; --chip:#393937; --seen:#6E6B63;
+  }}
+  :root[data-theme="light"]{
+    --bg:#FAF9F5; --card:#FFFFFF; --ink:#3D3929; --sub:#87867F; --line:#E8E4D9;
+    --accent:#C15F3C; --accent-ink:#A9502F; --accent-soft:#F6EAE3;
+    --save:#966428; --save-soft:#F7EFDF; --chip:#F0EEE6; --seen:#B8B4A7;
+  }
+  :root[data-theme="dark"]{
+    --bg:#262624; --card:#30302E; --ink:#ECEAE4; --sub:#A6A39A; --line:#3E3D3A;
+    --accent:#D97757; --accent-ink:#E89478; --accent-soft:#453026;
+    --save:#E0A052; --save-soft:#3B321F; --chip:#393937; --seen:#6E6B63;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:0;-webkit-text-size-adjust:100%;padding-bottom:env(safe-area-inset-bottom)}
+  .wrap{max-width:680px;margin:0 auto;padding:0 14px 90px}
+  header{position:sticky;top:0;z-index:6;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) 0 8px}
+  .hrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  h1{font-size:21px;margin:0;letter-spacing:-.01em;font-family:Georgia,'Times New Roman',serif;font-weight:600}
+  h1 .dot{color:var(--accent)}
+  .sub{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
+  .hdr-btns{display:flex;gap:7px}
+  .pill{background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .pill.primary{background:var(--accent);border-color:var(--accent);color:#FFF8F4}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pill.primary{color:#2A1A12}}
+  :root[data-theme="dark"] .pill.primary{color:#2A1A12}
+  .pill.theme{padding:6px 10px}
+  /* category chips */
+  .chips{display:flex;gap:7px;overflow-x:auto;margin-top:9px;padding-bottom:3px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{background:var(--chip);color:var(--sub);border:1px solid var(--line);border-radius:16px;padding:6px 13px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#FFF8F4}
+  :root[data-theme="dark"] .chip.on{color:#2A1A12}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip.on{color:#2A1A12}}
+  .chip .c{font-variant-numeric:tabular-nums;opacity:.7;font-weight:700;margin-left:4px}
+  /* cards */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:13px;transition:opacity .2s}
+  .card.watched{opacity:.5}
+  .thumb{display:block;position:relative;aspect-ratio:16/9;background:var(--chip)}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .dur{position:absolute;right:7px;bottom:7px;background:rgba(0,0,0,.82);color:#fff;font-size:11.5px;font-weight:600;padding:1px 6px;border-radius:5px;font-variant-numeric:tabular-nums}
+  .short-badge{position:absolute;left:7px;top:7px;background:rgba(0,0,0,.82);color:#fff;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:5px;letter-spacing:.04em}
+  .fresh{background:var(--accent);color:#FFF8F4;font-weight:700;border-radius:5px;padding:0 6px;font-size:10.5px;letter-spacing:.04em}
+  :root[data-theme="dark"] .fresh{color:#2A1A12}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .fresh{color:#2A1A12}}
+  .sub{border:1px solid var(--line);border-radius:5px;padding:0 6px;font-size:10.5px;font-weight:600;color:var(--sub)}
+  .sub.new{color:var(--accent-ink);border-color:var(--accent-soft)}
+  .prov{font-size:11.5px;color:var(--save);margin:-4px 0 9px;font-style:italic}
+  .body{padding:12px 14px 11px}
+  .meta{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--sub);margin-bottom:6px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+  .cat{background:var(--accent-soft);color:var(--accent-ink);font-weight:700;border-radius:6px;padding:1px 7px;font-size:11px;text-transform:uppercase;letter-spacing:.03em}
+  .score{background:var(--chip);color:var(--sub);font-weight:700;border-radius:6px;padding:1px 6px;font-size:11px}
+  .card h3{font-size:16.5px;line-height:1.32;margin:0 0 7px;text-wrap:balance;font-family:Georgia,'Times New Roman',serif;font-weight:600}
+  .card h3 a{color:var(--ink);text-decoration:none}
+  .why{font-size:13px;color:var(--accent-ink);background:var(--accent-soft);border-radius:9px;padding:7px 10px;margin:0 0 8px;line-height:1.45}
+  .sum{font-size:13.5px;color:var(--sub);margin:0 0 10px;line-height:1.5}
+  .skip{font-size:12.5px;color:var(--save);margin:-4px 0 10px;line-height:1.4}
+  .row{display:flex;align-items:center;gap:8px}
+  .open{flex:1;text-align:center;background:var(--accent);color:#FFF8F4;border:1px solid var(--accent);border-radius:9px;padding:8px 12px;font-size:13.5px;font-weight:700;text-decoration:none}
+  :root[data-theme="dark"] .open{color:#2A1A12}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .open{color:#2A1A12}}
+  .act{border:1px solid var(--line);background:var(--chip);border-radius:9px;padding:8px 12px;font-size:15px;cursor:pointer;line-height:1;color:var(--ink)}
+  .act.on-save{background:var(--save-soft);border-color:var(--save)}
+  .act.on-dn{background:var(--save-soft);border-color:var(--save);opacity:.7}
+  .cat-head{display:flex;align-items:baseline;gap:9px;margin:22px 0 11px}
+  .cat-head b{font-size:13px;text-transform:uppercase;letter-spacing:.07em}
+  .cat-head::after{content:"";flex:1;height:1px;background:var(--line)}
+  #sentinel{height:1px}
+  .end{text-align:center;color:var(--sub);font-size:13px;padding:22px 0 6px;line-height:1.6}
+  .end b{color:var(--ink)}
+  footer{margin-top:34px;text-align:center;color:var(--sub);font-size:12.5px;line-height:1.6}
+  #status{text-align:center;color:var(--sub);padding:40px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="hrow">
+      <div><h1>Signal Watch<span class="dot">.</span></h1><div class="sub" id="hdr-sub">loading…</div></div>
+      <div class="hdr-btns">
+        <button class="pill theme" id="toggle-theme" onclick="cycleTheme()" title="Theme">◐</button>
+        <button class="pill primary" onclick="sendFeedback()">Feedback</button>
+      </div>
+    </div>
+    <div class="chips" id="chips"></div>
+  </header>
+  <div id="feed"><div id="status">Loading your watch feed…</div></div>
+  <div id="sentinel"></div>
+  <footer>Signal Watch — refilled nightly from your interest profile.<br>👍 saved / 👎 dismissed / opened all tune tomorrow's picks. Hit the bottom of a category to ask for more next run.</footer>
+</div>
+<script>
+const K={save:'watch-saved',watched:'watch-watched',dn:'watch-dismissed',hungry:'watch-hungry',theme:'watch-theme'};
+const load1=k=>JSON.parse(localStorage.getItem(k)||'{}');
+const save1=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const saved=load1(K.save), watched=load1(K.watched), dismissed=load1(K.dn), hungry=load1(K.hungry);
+const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const titles={};
+const CATS=[['all','All'],['ai','AI'],['educational','Learn'],['history','History/Phil'],['games','Games'],['esports','Esports'],['entertainment','Entertainment'],['political','Political'],['misc','Misc']];
+const CATNAME={ai:'AI Content',educational:'Educational',history:'History · Religion · Philosophy',games:'Video Games',esports:'Esports · League',entertainment:'Entertainment',political:'Political',misc:'Misc'};
+const ALLCATS=['ai','educational','history','games','esports','entertainment','political','misc'];
+let DATA={}, active='all', PAGE=8, shown=0, flat=[];
+
+function vidUrl(it){return 'https://www.youtube.com/watch?v='+encodeURIComponent(it.id)}
+function thumbUrl(it){return it.thumb||('https://i.ytimg.com/vi/'+encodeURIComponent(it.id)+'/hqdefault.jpg')}
+function relTime(d){if(!d)return '';const t=Date.parse(d);if(isNaN(t))return esc(d);const days=Math.floor((Date.now()-t)/864e5);if(days<=0)return 'today';if(days===1)return 'yesterday';if(days<30)return days+'d ago';if(days<365)return Math.floor(days/30)+'mo ago';return Math.floor(days/365)+'y ago'}
+function isFresh(d){const t=Date.parse(d);return !isNaN(t)&&(Date.now()-t)<48*36e5}
+
+function cardHtml(it){
+  const w=watched[it.id]?' watched':'';
+  const sv=saved[it.id]?' on-save':'';
+  return `<article class="card${w}" data-id="${esc(it.id)}">
+    <a class="thumb" href="${vidUrl(it)}" target="_blank" rel="noopener" data-open="${esc(it.id)}">
+      <img loading="lazy" src="${esc(thumbUrl(it))}" alt="">
+      ${it.isShort?'<span class="short-badge">SHORT</span>':''}
+      ${it.duration?`<span class="dur">${esc(it.duration)}</span>`:''}
+    </a>
+    <div class="body">
+      <div class="meta"><span class="cat">${esc(CATshort(it.category))}</span>${it.subscribed?'<span class="sub">Subscribed</span>':'<span class="sub new">New channel</span>'}<span>${esc(it.channel||'')}</span>${it.published?`<span>· ${it.evergreen?'timeless':esc(relTime(it.published))}</span>`:''}${isFresh(it.published)?'<span class="fresh">NEW</span>':''}</div>
+      <h3><a href="${vidUrl(it)}" target="_blank" rel="noopener" data-open="${esc(it.id)}">${esc(it.title)}</a></h3>
+      ${it.why?`<p class="why">${esc(it.why)}</p>`:''}
+      ${it.summary?`<p class="sum">${esc(it.summary)}</p>`:''}
+      ${it.grounded&&it.grounded!=='transcript'?`<p class="prov">summary from ${esc(it.grounded)} — not transcript-verified</p>`:''}
+      ${it.skip?`<p class="skip">Skip if: ${esc(it.skip)}</p>`:''}
+      <div class="row">
+        <a class="open" href="${vidUrl(it)}" target="_blank" rel="noopener" data-open="${esc(it.id)}">▶ Open in browser</a>
+        <button class="act${sv}" data-save="${esc(it.id)}" title="Save">🔖</button>
+        <button class="act" data-dn="${esc(it.id)}" title="Dismiss">🗑</button>
+      </div>
+    </div>
+  </article>`;
+}
+const CATshort=c=>({ai:'AI',educational:'Learn',history:'Ideas',games:'Games',esports:'Esports',entertainment:'Fun',political:'Politics',misc:'Misc'}[c]||c);
+
+function buildFlat(){
+  flat=[];
+  const cats = active==='all' ? ['ai','educational','history','games','political','misc'] : [active];
+  for(const c of cats){
+    const items=(DATA.categories&&DATA.categories[c]||[]).filter(it=>!dismissed[it.id]);
+    if(!items.length) continue;
+    flat.push({head:CATNAME[c]});
+    items.forEach(it=>{titles[it.id]=it.title; flat.push(it)});
+  }
+}
+function renderMore(){
+  const feed=document.getElementById('feed');
+  let html='';
+  const end=Math.min(shown+PAGE, flat.length);
+  for(let i=shown;i<end;i++){
+    const row=flat[i];
+    html += row.head ? `<div class="cat-head"><b>${esc(row.head)}</b></div>` : cardHtml(row);
+  }
+  if(shown===0) feed.innerHTML='';
+  feed.insertAdjacentHTML('beforeend', html);
+  shown=end;
+  if(shown>=flat.length){
+    // reached the bottom of what we have for this view -> mark hungry
+    const cats = active==='all' ? ALLCATS : [active];
+    cats.forEach(c=>{if((DATA.categories&&DATA.categories[c]||[]).length) hungry[c]=1});
+    save1(K.hungry,hungry);
+    if(flat.length) feed.insertAdjacentHTML('beforeend',
+      `<div class="end"><b>You're caught up.</b><br>Noted you want more ${active==='all'?'across the board':esc(CATshort(active))} — tomorrow's refill will dig deeper here.</div>`);
+    else feed.innerHTML=`<div class="end">Nothing here yet — the next nightly run will fill this in.</div>`;
+  }
+}
+function switchCat(c){
+  active=c; shown=0;
+  document.querySelectorAll('.chip').forEach(el=>el.classList.toggle('on',el.dataset.c===c));
+  document.getElementById('feed').innerHTML='';
+  buildFlat(); renderMore(); window.scrollTo(0,0);
+}
+function renderChips(){
+  const el=document.getElementById('chips');
+  el.innerHTML=CATS.map(([c,label])=>{
+    const n = c==='all'
+      ? Object.values(DATA.categories||{}).reduce((a,arr)=>a+arr.filter(it=>!dismissed[it.id]).length,0)
+      : (DATA.categories&&DATA.categories[c]||[]).filter(it=>!dismissed[it.id]).length;
+    return `<button class="chip${c===active?' on':''}" data-c="${c}">${esc(label)}${n?`<span class="c">${n}</span>`:''}</button>`;
+  }).join('');
+}
+
+async function load(){
+  try{
+    DATA=await (await fetch('data/watch.json?'+Date.now())).json();
+    renderChips();
+    buildFlat(); renderMore();
+    const total=Object.values(DATA.categories||{}).reduce((a,arr)=>a+arr.length,0);
+    document.getElementById('hdr-sub').textContent=(DATA.generated||'')+' · '+total+' picks';
+    // reset hungry flags for categories that got refilled since last visit
+  }catch(e){document.getElementById('status').textContent='Could not load feed: '+e.message}
+}
+
+// infinite scroll
+new IntersectionObserver(es=>{for(const e of es){if(e.isIntersecting&&shown>0&&shown<flat.length)renderMore()}},{rootMargin:'600px'}).observe(document.getElementById('sentinel'));
+
+document.addEventListener('click',ev=>{
+  const chip=ev.target.closest('.chip'); if(chip){switchCat(chip.dataset.c);return}
+  const op=ev.target.closest('[data-open]'); if(op){const id=op.dataset.open; if(!watched[id]){watched[id]=1;save1(K.watched,watched);const c=op.closest('.card');if(c)c.classList.add('watched')} return}
+  const sv=ev.target.closest('[data-save]'); if(sv){ev.preventDefault();const id=sv.dataset.save; if(saved[id]){delete saved[id];sv.classList.remove('on-save')}else{saved[id]=1;sv.classList.add('on-save')} save1(K.save,saved); return}
+  const dn=ev.target.closest('[data-dn]'); if(dn){ev.preventDefault();const id=dn.dataset.dn; dismissed[id]=1;save1(K.dn,dismissed);const c=dn.closest('.card');if(c){c.style.opacity=0;setTimeout(()=>c.remove(),180)} renderChips(); return}
+});
+
+function sendFeedback(){
+  const likes=[],dis=[],want=[];
+  for(const id of Object.keys(saved)) likes.push('+ '+(titles[id]||id));
+  for(const id of Object.keys(dismissed)) dis.push('- '+(titles[id]||id));
+  for(const c of Object.keys(hungry)) if(hungry[c]) want.push(c);
+  if(!likes.length&&!dis.length&&!want.length){alert('Save (🔖) or dismiss (🗑) a few first, or scroll a category to the bottom — then send.');return}
+  const today=(DATA.generated)||'';
+  const body=['WatchFeed feedback '+today,'','SAVED (more like these):',...likes,'','DISMISSED (less like these):',...dis,'','WANT MORE IN: '+(want.join(', ')||'(none)'),'','Notes: '].join('\n');
+  location.href='mailto:pskeough@gmail.com?subject='+encodeURIComponent('WatchFeed feedback '+today)+'&body='+encodeURIComponent(body);
+}
+
+// Theme: auto -> light -> dark
+const THEMES=['auto','light','dark'], TICON={auto:'◐',light:'☀',dark:'☾'};
+function applyTheme(t){
+  if(t==='auto')document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',t);
+  const btn=document.getElementById('toggle-theme'); btn.textContent=TICON[t]; btn.title='Theme: '+t;
+  const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  document.querySelector('meta[name=theme-color]').setAttribute('content',dark?'#262624':'#FAF9F5');
+}
+function cycleTheme(){const cur=localStorage.getItem(K.theme)||'auto';const next=THEMES[(THEMES.indexOf(cur)+1)%3];localStorage.setItem(K.theme,next);applyTheme(next)}
+applyTheme(localStorage.getItem(K.theme)||'auto');
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+load();
+</script>
+</body>
+</html>
